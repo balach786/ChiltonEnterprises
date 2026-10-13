@@ -17,10 +17,22 @@ async function ensureReady() {
 }
 
 export default async function handler(req: Request, res: Response) {
+  // 1. Immediately handle OPTIONS preflight without blocking on DB initialization
+  if (req.method === 'OPTIONS') {
+    return app(req, res);
+  }
+
   try {
     await ensureReady();
     return app(req, res);
   } catch (err: unknown) {
+    const origin = req.headers.origin;
+    if (origin) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,PUT,DELETE,OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Idempotency-Key');
+    }
     const message = err instanceof Error ? err.message : 'Database initialization error';
     return res.status(500).json({
       success: false,
