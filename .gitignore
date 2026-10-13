@@ -1,0 +1,37 @@
+# ---------------------------------------------------------------- dependencies -------
+node_modules/
+.pnp
+.pnp.js
+
+# ---------------------------------------------------------------- build output --------
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# ---------------------------------------------------------------- environment ---------
+# Secrets must never be committed. Copy the .env.example files instead.
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# ---------------------------------------------------------------- local data ----------
+backend/uploads/
+.mongo/
+*.sqlite
+*.dump
+*.archive.json
+
+# ---------------------------------------------------------------- editors / OS --------
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+npm-debug.log*
+yarn-error.log*
+
+# ---------------------------------------------------------------- test artifacts ------
+junit.xml
+.playwright-report/

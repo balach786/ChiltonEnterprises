@@ -1,0 +1,61 @@
+# Production-shaped local stack: MongoDB as a single-node replica set (transactions need
+# replica-set semantics), the Express API, and nginx serving the built React app + proxy.
+#
+#   docker compose -f deployment/docker-compose.yml up --build
+#
+# The frontend image is built from frontend/ with a multi-stage build (see deployment/nginx.conf).
+services:
+  mongo:
+    image: mongo:8
+    restart: unless-stopped
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - mongo-data:/data/db
+      - ./mongo-init-replica.js:/docker-entrypoint-initdb.d/mongo-init-replica.js:ro
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand({ ping: 1 }).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      MONGODB_URI: mongodb://mongo:27017/?replicaSet=rs0
+      MONGODB_DB: showroom
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in deployment/.env}
+      JWT_EXPIRES_IN: 12h
+      JWT_REFRESH_EXPIRES_IN: 30d
+      BCRYPT_ROUNDS: 12
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
+      USE_TRANSACTIONS: "true"
+      TRUST_PROXY: "1"
+      SEED_DEFAULT_ADMIN: "true"
+      DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@showroom.local}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:?set DEFAULT_ADMIN_PASSWORD in deployment/.env}
+    ports:
+      - "4000:4000"
+
+  web:
+    build:
+      context: ..
+      dockerfile: deployment/frontend.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+
+volumes:
+  mongo-data:

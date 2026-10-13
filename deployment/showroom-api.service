@@ -1,0 +1,20 @@
+# systemd unit for the Express API on Ubuntu/Debian.
+#   sudo cp deployment/showroom-api.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now showroom-api
+[Unit]
+Description=Motorcycle Showroom Management API
+After=network.target
+
+[Service]
+Type=simple
+User=showroom
+WorkingDirectory=/opt/showroom/backend
+EnvironmentFile=/opt/showroom/backend/.env
+ExecStart=/usr/bin/node dist/server.js
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

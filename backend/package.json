@@ -1,0 +1,60 @@
+{
+  "name": "showroom-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Motorcycle Showroom Management System - Express + TypeScript + MongoDB API",
+  "main": "dist/server.js",
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "jest --runInBand --forceExit",
+    "test:unit": "jest --runInBand --forceExit --testPathPattern=tests/unit",
+    "test:integration": "jest --runInBand --forceExit --testPathPattern=tests/integration",
+    "test:e2e": "jest --runInBand --forceExit --testPathPattern=tests/e2e",
+    "seed": "ts-node src/scripts/seed.ts",
+    "seed:demo": "cross-env SEED_DEMO=1 ts-node src/scripts/seed.ts",
+    "init:tokens": "ts-node src/scripts/initTokens.ts",
+    "import:csv": "ts-node src/scripts/importCsv.ts",
+    "archive:export": "ts-node src/scripts/exportArchive.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "csv-stringify": "^6.5.1",
+    "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.6.0",
+    "morgan": "^1.10.0",
+    "pdfkit": "^0.15.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.12",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^20.14.15",
+    "@types/pdfkit": "^0.13.4",
+    "@types/supertest": "^6.0.2",
+    "cross-env": "^7.0.3",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.5.4"
+  }
+}
