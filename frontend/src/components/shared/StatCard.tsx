@@ -188,7 +188,7 @@ export function StatCard({
     <Wrapper
       {...(to ? { href: to } : {})}
       className={cn(
-        'group relative block overflow-hidden rounded-2xl border pt-5 pb-1 px-5 transition-all duration-200 hover:-translate-y-0.5',
+        'group relative block overflow-hidden rounded-2xl border pt-3.5 sm:pt-5 pb-1 px-3 sm:px-5 transition-all duration-200 hover:-translate-y-0.5 active:scale-98',
         theme.cardBg,
         to && 'cursor-pointer',
         className
@@ -203,11 +203,11 @@ export function StatCard({
       />
 
       <CardContent className="p-0">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           {icon && (
             <div
               className={cn(
-                'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-105',
+                'flex h-9 w-9 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl transition-transform duration-200 group-hover:scale-105 shadow-xs',
                 theme.iconBg,
                 theme.iconColor,
                 theme.ringColor
@@ -218,21 +218,21 @@ export function StatCard({
           )}
           <div className="min-w-0 flex-1 text-center">
             {loading ? (
-              <Skeleton className="mx-auto h-8 w-24" />
+              <Skeleton className="mx-auto h-7 sm:h-8 w-16 sm:w-24" />
             ) : (
-              <p className={cn('truncate text-3xl font-extrabold tracking-tight transition-colors', theme.valueColor)}>
+              <p className={cn('truncate text-xl sm:text-3xl font-extrabold tracking-tight transition-colors', theme.valueColor)}>
                 {value}
               </p>
             )}
-            <p className={cn('truncate text-xs font-semibold mt-0.5', theme.labelColor)}>{label}</p>
+            <p className={cn('truncate text-[11px] sm:text-xs font-semibold mt-0.5', theme.labelColor)}>{label}</p>
             {hint && !loading && (
-              <p className={cn('truncate text-[10px] font-medium mt-0.5', theme.hintColor)}>{hint}</p>
+              <p className={cn('hidden xs:block truncate text-[9px] sm:text-[10px] font-medium mt-0.5', theme.hintColor)}>{hint}</p>
             )}
             {badge && !loading && <div className="mt-1 flex justify-center">{badge}</div>}
           </div>
         </div>
 
-        <div className="-mx-5 -mb-1 mt-4">
+        <div className="-mx-3 sm:-mx-5 -mb-1 mt-2.5 sm:mt-4">
           <WaveDecoration strokes={theme.waves} />
         </div>
       </CardContent>

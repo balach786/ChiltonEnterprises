@@ -55,30 +55,30 @@ export function TokensPage() {
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-2.5 sm:gap-3 grid-cols-1 sm:grid-cols-3">
         <StatCard label="Total tokens" value={formatNumber(tokens.data?.total ?? 0)} hint="Fixed at 120 by the scheme" icon={<Ticket className="h-5 w-5" />} loading={tokens.isLoading} />
         <StatCard label="Assigned" tone="info" value={formatNumber(tokens.data?.assigned ?? 0)} hint="Currently enrolled" loading={tokens.isLoading} />
         <StatCard label="Unassigned" tone="positive" value={formatNumber(tokens.data?.unassigned ?? 0)} hint="Available for new customers" loading={tokens.isLoading} />
       </div>
 
-      <Card>
-        <CardHeader className="flex-row flex-wrap items-center justify-between gap-3 space-y-0">
+      <Card className="rounded-2xl border-slate-100 shadow-sm overflow-hidden">
+        <CardHeader className="flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0 p-4 sm:p-6 bg-slate-50/50 border-b border-slate-100">
           <div>
-            <CardTitle className="text-base">Register</CardTitle>
-            <CardDescription>Green tiles are free; blue tiles belong to an enrolled customer.</CardDescription>
+            <CardTitle className="text-sm sm:text-base">Token Register</CardTitle>
+            <CardDescription className="text-xs">Green tiles are free; blue tiles belong to an enrolled customer.</CardDescription>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-48">
               <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                className="w-44 pl-8"
+                className="w-full pl-8 text-xs h-9 rounded-xl"
                 placeholder="Token or customer"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
             </div>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-36">
+              <SelectTrigger className="w-full sm:w-36 text-xs h-9 rounded-xl bg-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -89,13 +89,13 @@ export function TokensPage() {
             </Select>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-6">
           {tokens.isError ? (
             <ErrorState error={tokens.error} onRetry={() => void tokens.refetch()} />
           ) : tokens.isLoading ? (
-            <div className="grid grid-cols-5 gap-2 sm:grid-cols-8 lg:grid-cols-10">
-              {Array.from({ length: 40 }).map((_, i) => (
-                <Skeleton key={i} className="h-16" />
+            <div className="grid grid-cols-3 sm:grid-cols-6 lg:grid-cols-10 gap-2">
+              {Array.from({ length: 30 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 rounded-xl" />
               ))}
             </div>
           ) : items.length === 0 ? (
@@ -103,7 +103,7 @@ export function TokensPage() {
               No tokens match this filter.
             </p>
           ) : (
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-10">
+            <div className="grid grid-cols-3 sm:grid-cols-6 lg:grid-cols-10 gap-2 sm:gap-2.5">
               {items.map((token) => {
                 const assignment = token.currentAssignment;
                 const name = assignment?.customerName;

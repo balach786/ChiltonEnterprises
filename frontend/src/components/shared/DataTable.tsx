@@ -86,12 +86,12 @@ export function DataTable<T>({
   }
 
   return (
-    <div style={maxHeight ? { maxHeight, overflow: 'auto' } : undefined} className="scrollbar-thin rounded-2xl overflow-hidden border border-slate-100 bg-white shadow-sm">
-      <Table>
+    <div style={maxHeight ? { maxHeight, overflow: 'auto' } : undefined} className="scrollbar-thin rounded-2xl overflow-x-auto w-full border border-slate-100 bg-white shadow-sm">
+      <Table className="min-w-full">
         <TableHeader className="sticky top-0 z-10 bg-[#2b474e] text-white">
           <TableRow className="border-b border-teal-800/40 hover:bg-[#2b474e]">
             {columns.map((column, i) => (
-              <TableHead key={i} className={cn('text-white text-xs font-semibold', column.headerClassName)}>
+              <TableHead key={i} className={cn('text-white text-xs font-semibold whitespace-nowrap', column.headerClassName)}>
                 {column.header}
               </TableHead>
             ))}
@@ -113,7 +113,7 @@ export function DataTable<T>({
                 )}
               >
                 {columns.map((column, i) => (
-                  <TableCell key={i} className={cn(isHighlighted ? 'text-white' : 'text-slate-800', column.className)}>
+                  <TableCell key={i} className={cn('whitespace-nowrap sm:whitespace-normal', isHighlighted ? 'text-white' : 'text-slate-800', column.className)}>
                     {column.cell(row, index)}
                   </TableCell>
                 ))}
@@ -125,7 +125,7 @@ export function DataTable<T>({
           <TableFooter>
             <TableRow>
               {columns.map((column, i) => (
-                <TableCell key={i} className={cn('py-2 text-xs', column.className)}>
+                <TableCell key={i} className={cn('py-2 text-xs whitespace-nowrap', column.className)}>
                   {column.footer ? column.footer(rows) : null}
                 </TableCell>
               ))}
@@ -151,8 +151,8 @@ export function Pagination({ page, limit, total, onPageChange }: PaginationProps
   const from = (page - 1) * limit + 1;
   const to = Math.min(page * limit, total);
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm">
-      <p className="text-muted-foreground tabular-nums">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 border-t px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm">
+      <p className="text-muted-foreground tabular-nums text-center sm:text-left">
         Showing <span className="font-medium text-foreground">{from}</span>–
         <span className="font-medium text-foreground">{to}</span> of{' '}
         <span className="font-medium text-foreground">{total}</span>

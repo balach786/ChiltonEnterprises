@@ -133,44 +133,43 @@ export function DashboardPage() {
   return (
     <div className="space-y-5 pb-6">
       {/* ================= TOP ROW: DATE FILTERS & FILTER BUTTON ================= */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 rounded-xl bg-white/80 p-1 shadow-xs backdrop-blur border border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2 rounded-xl bg-white/80 p-1 shadow-xs backdrop-blur border border-slate-100 overflow-x-auto">
           {/* Date From */}
-          <div className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-800">
+          <div className="flex items-center gap-1.5 sm:gap-2 rounded-lg border border-rose-200 bg-rose-50/70 px-2 sm:px-3 py-1.5 text-xs font-semibold text-rose-800 shrink-0">
             <CalendarClock className="h-3.5 w-3.5 text-rose-500" />
             <input
               type="text"
               value="17/10/2026"
               readOnly
-              className="w-20 bg-transparent text-xs font-semibold text-rose-800 outline-none"
+              className="w-18 sm:w-20 bg-transparent text-xs font-semibold text-rose-800 outline-none"
             />
           </div>
 
           <span className="px-0.5 font-bold text-slate-300">—</span>
 
           {/* Date To */}
-          <div className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-800">
+          <div className="flex items-center gap-1.5 sm:gap-2 rounded-lg border border-rose-200 bg-rose-50/70 px-2 sm:px-3 py-1.5 text-xs font-semibold text-rose-800 shrink-0">
             <CalendarClock className="h-3.5 w-3.5 text-rose-500" />
             <input
               type="text"
               value="18/10/2026"
               readOnly
-              className="w-20 bg-transparent text-xs font-semibold text-rose-800 outline-none"
+              className="w-18 sm:w-20 bg-transparent text-xs font-semibold text-rose-800 outline-none"
             />
           </div>
+
+          <button
+            type="button"
+            className="rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-3 sm:px-5 py-1.5 text-xs font-bold text-white shadow-sm shadow-blue-500/25 transition hover:shadow-md hover:from-blue-700 hover:to-indigo-700 active:scale-95 shrink-0"
+          >
+            Filter
+          </button>
         </div>
 
-        {/* Filter Button */}
-        <button
-          type="button"
-          className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/25 transition hover:shadow-md hover:from-blue-700 hover:to-indigo-700 active:scale-95"
-        >
-          Filter
-        </button>
-
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex items-center justify-end">
           <Select value={location} onValueChange={setLocation}>
-            <SelectTrigger className="h-8.5 w-32 text-xs bg-white rounded-xl border-slate-200 shadow-xs">
+            <SelectTrigger className="h-9 w-full sm:w-36 text-xs bg-white rounded-xl border-slate-200 shadow-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -182,15 +181,15 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* ================= 4 KPI CARDS (Vibrant & Colorful) ================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
+      {/* ================= 4 KPI CARDS (2x2 Grid on Mobile, 4 Cols on Desktop) ================= */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-5">
         <StatCard
           label="Total Vehicles"
           variant="cyan"
           loading={loading}
           value={data?.tokens.total ? `${data.tokens.total}` : '350'}
           hint="Registered tokens in scheme"
-          icon={<Bike className="h-6 w-6" />}
+          icon={<Bike className="h-5 w-5 sm:h-6 sm:w-6" />}
           to="/tokens"
         />
         <StatCard
@@ -199,7 +198,7 @@ export function DashboardPage() {
           loading={loading}
           value={data?.tokens.unassigned ? `${data.tokens.unassigned}` : '180'}
           hint="Open for enrollment"
-          icon={<CircleDollarSign className="h-6 w-6" />}
+          icon={<CircleDollarSign className="h-5 w-5 sm:h-6 sm:w-6" />}
           to="/tokens"
         />
         <StatCard
@@ -208,7 +207,7 @@ export function DashboardPage() {
           loading={loading}
           value={data?.customers.active ? `${data.customers.active}` : '45'}
           hint="Active scheme enrollments"
-          icon={<Users className="h-6 w-6" />}
+          icon={<Users className="h-5 w-5 sm:h-6 sm:w-6" />}
           to="/customers"
         />
         <StatCard
@@ -217,23 +216,23 @@ export function DashboardPage() {
           loading={loading}
           value="80"
           hint="Target goal for October"
-          icon={<TrendingUp className="h-6 w-6" />}
+          icon={<TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" />}
           to="/payments"
         />
       </div>
 
       {/* ================= MIDDLE ROW: SALES STATISTIC & INVENTORY TYPE ================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
         {/* Sales Statistic Card (7 cols) */}
-        <div className="lg:col-span-7 flex flex-col justify-between rounded-2xl border border-sky-100 bg-gradient-to-b from-white via-white to-sky-50/20 p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25">
-                <TrendingUp className="h-4.5 w-4.5" />
+        <div className="lg:col-span-7 flex flex-col justify-between rounded-2xl border border-sky-100 bg-gradient-to-b from-white via-white to-sky-50/20 p-3.5 sm:p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25">
+                <TrendingUp className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-800">Sales Overview</h3>
-                <p className="text-[11px] font-medium text-slate-400">Weekly &amp; Monthly Performance</p>
+                <h3 className="text-xs sm:text-sm font-bold text-slate-800">Sales Overview</h3>
+                <p className="text-[10px] sm:text-[11px] font-medium text-slate-400">Weekly &amp; Monthly Performance</p>
               </div>
             </div>
 
@@ -243,7 +242,7 @@ export function DashboardPage() {
                   key={tab}
                   type="button"
                   onClick={() => setStatTimeRange(tab)}
-                  className={`rounded-lg px-3 py-1 text-xs transition duration-150 ${
+                  className={`rounded-lg px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs transition duration-150 ${
                     statTimeRange === tab
                       ? 'bg-gradient-to-r from-sky-600 to-blue-600 font-bold text-white shadow-sm shadow-blue-500/20'
                       : 'text-slate-600 hover:text-slate-900'
@@ -256,22 +255,22 @@ export function DashboardPage() {
           </div>
 
           {/* Bar Chart with colorful gradient bars */}
-          <div className="relative flex h-60 flex-col justify-end px-6 pt-6 pb-2">
+          <div className="relative flex h-52 sm:h-60 flex-col justify-end px-3 sm:px-6 pt-6 pb-2">
             {/* Y Axis line */}
-            <div className="absolute top-1 bottom-6 left-6 flex w-[1.5px] flex-col items-center bg-slate-400/80">
+            <div className="absolute top-1 bottom-6 left-3 sm:left-6 flex w-[1.5px] flex-col items-center bg-slate-400/80">
               <span className="-mt-1.5 h-0 w-0 border-r-[4px] border-b-[6px] border-l-[4px] border-r-transparent border-b-slate-600 border-l-transparent" />
             </div>
 
             {/* X Axis line */}
-            <div className="absolute right-2 bottom-6 left-6 flex h-[1.5px] items-center justify-end bg-slate-400/80">
+            <div className="absolute right-2 bottom-6 left-3 sm:left-6 flex h-[1.5px] items-center justify-end bg-slate-400/80">
               <span className="-mr-1.5 h-0 w-0 border-t-[4px] border-b-[4px] border-l-[6px] border-t-transparent border-b-transparent border-l-slate-600" />
             </div>
 
             {/* Bars Container */}
-            <div className="flex h-full items-end justify-around pl-4 pr-6 pb-2">
+            <div className="flex h-full items-end justify-around pl-3 sm:pl-4 pr-3 sm:pr-6 pb-2">
               {barWeekly.map((item) => (
                 <div key={item.day} className="group flex h-full cursor-pointer flex-col items-center justify-end">
-                  <span className="mb-1 text-[11px] font-bold text-slate-600 transition transform -rotate-12 group-hover:scale-110">
+                  <span className="mb-1 text-[10px] sm:text-[11px] font-bold text-slate-600 transition transform -rotate-12 group-hover:scale-110">
                     {item.label}
                   </span>
                   <div
@@ -280,7 +279,7 @@ export function DashboardPage() {
                       background: `linear-gradient(to top, ${item.from}, ${item.to})`,
                       boxShadow: `0 4px 12px ${item.shadow}`,
                     }}
-                    className="relative w-8 sm:w-9 rounded-t-lg transition duration-200 group-hover:brightness-110 group-hover:scale-y-[1.02] origin-bottom"
+                    className="relative w-6 sm:w-9 rounded-t-lg transition duration-200 group-hover:brightness-110 group-hover:scale-y-[1.02] origin-bottom"
                   >
                     <div className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 py-1 text-[10px] font-bold text-white opacity-0 shadow-lg transition group-hover:opacity-100">
                       {item.val} units sold
@@ -293,15 +292,15 @@ export function DashboardPage() {
         </div>
 
         {/* Inventory Type Card (5 cols) */}
-        <div className="lg:col-span-5 relative flex flex-col justify-between overflow-hidden rounded-2xl border border-teal-100 bg-gradient-to-b from-white via-white to-teal-50/20 pt-5 pr-5 pb-1 pl-5 shadow-sm hover:shadow-md transition-shadow">
+        <div className="lg:col-span-5 relative flex flex-col justify-between overflow-hidden rounded-2xl border border-teal-100 bg-gradient-to-b from-white via-white to-teal-50/20 p-3.5 sm:p-5 pb-1 shadow-sm hover:shadow-md transition-shadow">
           <div>
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-600 text-white shadow-md shadow-teal-500/25">
-                <Bike className="h-4.5 w-4.5" />
+            <div className="flex items-center gap-2 sm:gap-2.5 mb-3">
+              <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-600 text-white shadow-md shadow-teal-500/25">
+                <Bike className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-800">Inventory Distribution</h3>
-                <p className="text-[11px] font-medium text-slate-400">Live breakdown by vehicle type</p>
+                <h3 className="text-xs sm:text-sm font-bold text-slate-800">Inventory Distribution</h3>
+                <p className="text-[10px] sm:text-[11px] font-medium text-slate-400">Live breakdown by vehicle type</p>
               </div>
             </div>
 
@@ -370,19 +369,19 @@ export function DashboardPage() {
         {/* Recent Vehicles/Sales Table (8 cols) */}
         <div className="lg:col-span-8 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm hover:shadow-md transition-shadow">
           {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-[#1d353b] via-[#26444c] to-[#204a55] px-5 py-3 text-white">
+          <div className="flex flex-wrap items-center justify-between gap-2.5 bg-gradient-to-r from-[#1d353b] via-[#26444c] to-[#204a55] p-3 sm:px-5 sm:py-3 text-white">
             <div>
-              <h3 className="text-sm font-bold tracking-wide">Recent Vehicles / Sales</h3>
+              <h3 className="text-xs sm:text-sm font-bold tracking-wide">Recent Vehicles / Sales</h3>
               <p className="text-[10px] text-teal-200/80">Latest transaction logs</p>
             </div>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search model/customer…"
+                  placeholder="Search model…"
                   value={tableSearch}
                   onChange={(e) => setTableSearch(e.target.value)}
-                  className="w-36 sm:w-44 rounded-full bg-white/95 pl-3.5 pr-7 py-1 text-xs text-slate-800 placeholder-slate-400 outline-none shadow-inner focus:ring-2 focus:ring-sky-400"
+                  className="w-28 sm:w-44 rounded-full bg-white/95 pl-3 pr-6 py-1 text-xs text-slate-800 placeholder-slate-400 outline-none shadow-inner focus:ring-2 focus:ring-sky-400"
                 />
               </div>
               <button
@@ -390,11 +389,11 @@ export function DashboardPage() {
                 onClick={() =>
                   setStatusFilter((prev) => (prev === 'ALL' ? 'Sold' : prev === 'Sold' ? 'Available' : 'ALL'))
                 }
-                className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-blue-500/25 transition hover:from-blue-600 hover:to-indigo-700 active:scale-95"
+                className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-2.5 sm:px-3 py-1 text-xs font-bold text-white shadow-sm shadow-blue-500/25 transition hover:from-blue-600 hover:to-indigo-700 active:scale-95 shrink-0"
               >
-                <span>Filter By</span>
+                <span>Filter</span>
                 {statusFilter !== 'ALL' && (
-                  <span className="rounded bg-white/20 px-1.5 text-[10px]">{statusFilter}</span>
+                  <span className="rounded bg-white/20 px-1 text-[10px]">{statusFilter}</span>
                 )}
               </button>
             </div>
