@@ -23,28 +23,42 @@ export function createApp(): Application {
   );
 
   const allowedOrigins = config.corsOrigins.length ? config.corsOrigins : [config.frontendUrls[0]];
-  if (config.isProduction && allowedOrigins.includes('*')) {
-    // A wildcard with credentials is both insecure and rejected by browsers; fail loudly at
-    // boot instead of silently shipping an open API.
-    throw new Error(
-      'CORS_ORIGINS=* is not allowed in production. List the exact frontend origin(s), ' +
-        'e.g. CORS_ORIGINS=https://showroom.example.com'
-    );
-  }
-  app.use(
-    cors({
-      origin(origin, callback) {
-        // Allow same-origin / server-to-server calls (no Origin header) and configured apps.
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) return callback(null, true);
-        return callback(new Error(`Origin ${origin} is not allowed by CORS`));
-      },
-      credentials: true,
-      methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Idempotency-Key'],
-      exposedHeaders: ['Content-Disposition'],
-    })
-  );
+
+  const corsMiddleware = cors({
+    origin(origin, callback) {
+      // 1. Allow same-origin / server-to-server / curl calls (no Origin header)
+      if (!origin) return callback(null, true);
+
+      // 2. Allow any localhost / 127.0.0.1 port in development or testing
+      if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+        return callback(null, true);
+      }
+
+      // 3. Allow any Vercel deployment domain (*.vercel.app)
+      if (/^https:\/\/.*\.vercel\.app$/.test(origin)) {
+        return callback(null, true);
+      }
+
+      // 4. Check explicit allowed origins or wildcard
+      if (
+        allowedOrigins.includes('*') ||
+        allowedOrigins.includes(origin) ||
+        allowedOrigins.some((allowed) => allowed.endsWith('*') && origin.startsWith(allowed.slice(0, -1)))
+      ) {
+        return callback(null, true);
+      }
+
+      // 5. Silently omit CORS headers for unknown origin rather than throwing an unhandled 500
+      return callback(null, false);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Idempotency-Key'],
+    exposedHeaders: ['Content-Disposition'],
+  });
+
+  app.use(corsMiddleware);
+  app.options('*', corsMiddleware);
 
   app.use(compression());
   app.use(express.json({ limit: '5mb' }));
