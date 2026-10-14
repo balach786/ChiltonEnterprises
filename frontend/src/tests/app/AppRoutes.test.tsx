@@ -28,9 +28,9 @@ describe('App route wiring', () => {
   it('lazy-loads the dashboard for an authenticated owner', async () => {
     renderWithProviders(<App />, '/');
 
-    await waitFor(() => expect(screen.getByText(/Motorcycle Showroom Management/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/The scheme, at a glance\./i)).toBeInTheDocument());
     // Real dashboard data from the fixture, proving the lazy chunk mounted and fetched.
-    expect(screen.getByText('Collections (range)')).toBeInTheDocument();
+    expect(screen.getByText('Collections this month')).toBeInTheDocument();
     // Regression: a valid token must restore the session in the same commit, otherwise the guard
     // sees one render of `isReady && !isAuthenticated` and dumps the user on the login screen.
     expect(screen.queryByRole('button', { name: /sign in/i })).not.toBeInTheDocument();
@@ -46,7 +46,7 @@ describe('App route wiring', () => {
   it('sends an already signed-in visitor away from the login screen', async () => {
     renderWithProviders(<App />, '/login');
 
-    await waitFor(() => expect(screen.getByText('Collections (range)')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Collections this month')).toBeInTheDocument());
     expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
   });
 

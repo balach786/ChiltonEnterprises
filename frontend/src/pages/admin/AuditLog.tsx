@@ -52,8 +52,14 @@ export function AuditLogPage() {
   return (
     <>
       <PageHeader
-        title="Audit history"
-        description="Every create, update, reversal, correction and settings change — with who did it and why. Nothing is silently deleted."
+        eyebrow="CHANGE HISTORY · DEMO USER"
+        title="Audit Log"
+        description="Important financial and customer actions are retained in the current in-memory session."
+        actions={
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            Print
+          </Button>
+        }
       />
 
       <Card className="overflow-hidden">

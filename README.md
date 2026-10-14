@@ -88,7 +88,8 @@ cd backend && npm run seed:demo
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Owner / Administrator | `admin@showroom.local` | `Admin@12345` (or `DEFAULT_ADMIN_PASSWORD`) |
+| Owner / Administrator | `admin@showroom.local` | `` (or 
+ChangeMe@123`DEFAULT_ADMIN_PASSWORD`) |
 | Accountant | `accountant@showroom.local` | `Account@12345` |
 | Customer-service staff | `staff@showroom.local` | `Staff@12345` |
 | Draw manager | `draw@showroom.local` | `Draw@12345` |

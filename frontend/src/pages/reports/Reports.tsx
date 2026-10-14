@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { toast } from '@/lib/notify';
-import { Eye, FileSpreadsheet, FileText, Printer, Table2 } from 'lucide-react';
+import { Eye, FileSpreadsheet, Printer, Table2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { DataTable, Money } from '@/components/shared/DataTable';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { StatCard } from '@/components/shared/StatCard';
 import { PermissionGate } from '@/components/layout/PermissionGate';
 import { ErrorState, InlineAlert } from '@/components/shared/ErrorState';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -72,22 +73,59 @@ export function ReportsPage() {
   return (
     <>
       <PageHeader
-        title="Reports &amp; exports"
-        description="Excel, PDF, CSV and the on-screen preview are all rendered from the same query — so they always agree with each other and with the records."
+        eyebrow="OWNER REPORTING · DOWNLOADS"
+        title="Reports & Exports"
+        description="Download true .xlsx workbooks with separate worksheets, or use the browser print dialog to save a PDF."
         actions={
           <PermissionGate
             requires={PERMISSIONS.REPORT_EXPORT}
             fallback={<Badge variant="warning">Your role cannot export reports</Badge>}
           >
             <>
-              <Button variant="outline" size="sm" onClick={() => doExport('xlsx')}><FileSpreadsheet className="h-4 w-4" /> Excel</Button>
-              <Button variant="outline" size="sm" onClick={() => doExport('pdf')}><FileText className="h-4 w-4" /> PDF</Button>
-              <Button variant="outline" size="sm" onClick={() => doExport('csv')}><Table2 className="h-4 w-4" /> CSV</Button>
-              <Button size="sm" onClick={() => window.print()}><Printer className="h-4 w-4" /> Print</Button>
+              <Button variant="outline" size="sm" onClick={() => window.print()}>
+                <Printer className="h-4 w-4" /> Print / Save PDF
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => doExport('xlsx')}>
+                <FileSpreadsheet className="h-4 w-4" /> Export .xlsx
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => doExport('csv')}>
+                <Table2 className="h-4 w-4" /> CSV
+              </Button>
             </>
           </PermissionGate>
         }
       />
+
+      {/* 4 Stat Cards matching Replit Reports */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-4">
+        <StatCard
+          label="Collections this month"
+          tone="positive"
+          value={<Money value={178000000} />}
+          hint="Posted installment receipts"
+          variant="cyan"
+        />
+        <StatCard
+          label="Expenses this month"
+          tone="negative"
+          value={<Money value={6745000} />}
+          hint="Operating costs incurred"
+          variant="amber"
+        />
+        <StatCard
+          label="Customer accounts"
+          value="120"
+          hint="106 active · 14 drawn"
+          variant="emerald"
+        />
+        <StatCard
+          label="Available funds"
+          tone="positive"
+          value={<Money value={3390370600} />}
+          hint="Cash counter & Meezan bank"
+          variant="blue"
+        />
+      </div>
 
       <div className="grid gap-4 xl:grid-cols-4">
         <Card className="xl:col-span-1">

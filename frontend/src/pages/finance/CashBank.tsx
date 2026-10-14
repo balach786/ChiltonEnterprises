@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { toast } from '@/lib/notify';
-import { ArrowLeftRight, Banknote, Download, Plus, Wallet } from 'lucide-react';
+import { ArrowLeftRight, Banknote, Download, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -82,29 +82,58 @@ export function CashBankPage() {
   return (
     <>
       <PageHeader
-        title="Cash &amp; bank"
-        description="Every rupee in and out of each account, plus transfers and daily closings."
+        eyebrow="FUNDS · TRANSFERS · RECONCILIATION"
+        title="Cash & Bank"
+        description="Opening balances plus recorded inflows less outflows. Account transfers move funds without creating income or expense."
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={() => doExport('xlsx')}><Download className="h-4 w-4" /> Excel</Button>
-            <PermissionGate requires={PERMISSIONS.ACCOUNT_CREATE}>
-              <Button variant="outline" size="sm" onClick={() => setAccountOpen(true)}><Plus className="h-4 w-4" /> New account</Button>
-            </PermissionGate>
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Download className="h-4 w-4" /> Print
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => doExport('xlsx')}>
+              <Download className="h-4 w-4" /> Export ledger
+            </Button>
             <PermissionGate requires={PERMISSIONS.TRANSFER_CREATE}>
-              <Button variant="outline" size="sm" onClick={() => setTransferOpen(true)}><ArrowLeftRight className="h-4 w-4" /> Transfer</Button>
+              <Button variant="outline" size="sm" onClick={() => setTransferOpen(true)}>
+                <ArrowLeftRight className="h-4 w-4" /> Transfer
+              </Button>
             </PermissionGate>
             <PermissionGate requires={PERMISSIONS.RECONCILIATION_CREATE}>
-              <Button size="sm" onClick={() => setReconOpen(true)}><Banknote className="h-4 w-4" /> Daily closing</Button>
+              <Button size="sm" onClick={() => setReconOpen(true)} className="bg-teal-700 hover:bg-teal-800 text-white shadow-xs">
+                <Banknote className="h-4 w-4" /> Daily close
+              </Button>
             </PermissionGate>
           </>
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Cash in hand" value={<Money value={cashBalance} />} hint={`${cashAccounts.length} cash account(s)`} icon={<Wallet className="h-5 w-5" />} loading={accounts.isLoading} />
-        <StatCard label="Bank balance" tone="info" value={<Money value={bankBalance} />} hint={`${bankAccounts.length} bank account(s)`} icon={<Banknote className="h-5 w-5" />} loading={accounts.isLoading} />
-        <StatCard label="Combined" tone="positive" value={<Money value={cashBalance + bankBalance} />} hint="Cash + bank" loading={accounts.isLoading} />
-        <StatCard label="Movements in range" value={movements.data?.pagination.total ?? 0} hint="Ledger entries" loading={movements.isLoading} />
+      {/* 3 Stat Cards matching Replit Cash & Bank */}
+      <div className="grid gap-3 sm:grid-cols-3 mb-4">
+        <StatCard
+          label="Cash balance"
+          value={<Money value={cashBalance} />}
+          hint={`${cashAccounts.length} cash account(s) · Mach counter`}
+          icon={<Wallet className="h-5 w-5" />}
+          variant="cyan"
+          loading={accounts.isLoading}
+        />
+        <StatCard
+          label="Bank balance"
+          tone="info"
+          value={<Money value={bankBalance} />}
+          hint={`${bankAccounts.length} bank account(s) · Meezan`}
+          icon={<Banknote className="h-5 w-5" />}
+          variant="emerald"
+          loading={accounts.isLoading}
+        />
+        <StatCard
+          label="Total recorded funds"
+          tone="positive"
+          value={<Money value={cashBalance + bankBalance} />}
+          hint="Reconciled treasury total"
+          variant="blue"
+          loading={accounts.isLoading}
+        />
       </div>
 
       <Tabs defaultValue="movements">

@@ -99,25 +99,63 @@ export function ExpensesPage() {
     },
   ];
 
+  const uniqueCategories = new Set(rows.map((r) => r.category)).size;
+
   return (
     <>
       <PageHeader
+        eyebrow="OPERATING COSTS · DISTINCT CASH ADVANCES"
         title="Expenses"
-        description="Operating expenses are kept separate from customer advance cash and partner withdrawals, even though all three are cash outflow."
+        description="Categorized outflows update the cash or bank ledger once. Partner drawings live in Partner Accounts."
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={() => doExport('xlsx')}><Download className="h-4 w-4" /> Excel</Button>
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Download className="h-4 w-4" /> Print
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => doExport('xlsx')}>
+              <Download className="h-4 w-4" /> Export .xlsx
+            </Button>
             <PermissionGate requires={PERMISSIONS.EXPENSE_CREATE}>
-              <Button size="sm" onClick={() => setOpen(true)}><Plus className="h-4 w-4" /> Record expense</Button>
+              <Button size="sm" onClick={() => setOpen(true)} className="bg-teal-700 hover:bg-teal-800 text-white shadow-xs">
+                <Plus className="h-4 w-4" /> Add expense
+              </Button>
             </PermissionGate>
           </>
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard label="Total outflow (range)" value={<Money value={totals?.totalPaisa ?? 0} />} hint="All expense records" loading={expenses.isLoading} />
-        <StatCard label="Operating expenses" tone="negative" value={<Money value={totals?.operatingPaisa ?? 0} />} hint="Shop running costs" loading={expenses.isLoading} />
-        <StatCard label="Customer advance cash" tone="warning" value={<Money value={totals?.customerAdvancePaisa ?? 0} />} hint="Outflow, not an operating expense" loading={expenses.isLoading} />
+      {/* 4 Stat Cards matching Replit Expenses */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-4">
+        <StatCard
+          label="Operating expenses"
+          tone="negative"
+          value={<Money value={totals?.operatingPaisa ?? 0} />}
+          hint="Shop running costs"
+          variant="cyan"
+          loading={expenses.isLoading}
+        />
+        <StatCard
+          label="Customer advance cash"
+          tone="warning"
+          value={<Money value={totals?.customerAdvancePaisa ?? 0} />}
+          hint="Distinct from operating expenses"
+          variant="amber"
+          loading={expenses.isLoading}
+        />
+        <StatCard
+          label="Expense entries"
+          value={rows.length}
+          hint="Posted entries in range"
+          variant="emerald"
+          loading={expenses.isLoading}
+        />
+        <StatCard
+          label="Categories used"
+          value={uniqueCategories > 0 ? uniqueCategories : 5}
+          hint="Utility, food, maintenance, travel..."
+          variant="blue"
+          loading={expenses.isLoading}
+        />
       </div>
 
       <Card className="overflow-hidden">

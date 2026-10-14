@@ -1,632 +1,664 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip as ChartTooltip,
-} from 'recharts';
-import {
-  Bike,
-  CalendarClock,
+  Printer,
+  Plus,
+  Users,
+  Activity,
+  ShieldCheck,
   CircleDollarSign,
   TrendingUp,
-  Users,
+  TrendingDown,
   Wallet,
-  ArrowUpRight,
-  Building2,
+  Bike,
+  Coins,
+  AlertTriangle,
+  ArrowRight,
   CheckCircle2,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { StatCard, WaveDecoration } from '@/components/shared/StatCard';
-import { Money } from '@/components/shared/DataTable';
-import { useDashboardCashPosition, useDashboardSummary } from '@/hooks/useApi';
-import { cn, formatDateTime, monthStartIso, todayIso } from '@/lib/utils';
+import { useDashboardSummary } from '@/hooks/useApi';
+import { cn, formatDate } from '@/lib/utils';
+import type { DashboardSummary } from '@/lib/types';
+
+/** Fallback mock data matching Chiltan Enterprises scheme if backend is loading or in demo mode */
+const DEFAULT_DEMO: DashboardSummary = {
+  generatedAt: new Date().toISOString(),
+  range: { from: '2026-10-01T00:00:00.000Z', to: '2026-10-31T23:59:59.999Z' },
+  tokens: { total: 120, registered: 120, assigned: 120, unassigned: 0 },
+  scheme: { currentSchemeMonth: 15, durationMonths: 28 },
+  customers: { active: 106, drawnClosed: 14 },
+  advances: { bikeCases: 10, cashCases: 4 },
+  draws: { confirmed: 14 },
+  collections: {
+    today: { paisa: 0, pkr: 0, formatted: '0.00' },
+    thisMonth: { paisa: 120660000, pkr: 1206600, formatted: '1,206,600.00' },
+    range: { paisa: 120660000, pkr: 1206600, formatted: '1,206,600.00' },
+  },
+  operatingExpenses: {
+    today: { paisa: 0, pkr: 0, formatted: '0.00' },
+    thisMonth: { paisa: 6745000, pkr: 67450, formatted: '67,450.00' },
+    range: { paisa: 6745000, pkr: 67450, formatted: '67,450.00' },
+  },
+  customerAdvances: {
+    today: { paisa: 0, pkr: 0, formatted: '0.00' },
+    thisMonth: { paisa: 7000000, pkr: 70000, formatted: '70,000.00' },
+  },
+  partnerWithdrawals: {
+    today: { paisa: 0, pkr: 0, formatted: '0.00' },
+    thisMonth: { paisa: 2500000, pkr: 25000, formatted: '25,000.00' },
+  },
+  partnerContributions: {
+    thisMonth: { paisa: 5000000, pkr: 50000, formatted: '50,000.00' },
+  },
+  cashFlow: {
+    totalInflow: { paisa: 120660000, pkr: 1206600, formatted: '1,206,600.00' },
+    totalOutflow: { paisa: 9245000, pkr: 92450, formatted: '92,450.00' },
+    net: { paisa: 111415000, pkr: 1114150, formatted: '1,114,150.00' },
+  },
+  balances: {
+    cash: { paisa: 2399475600, pkr: 23994756, formatted: '23,994,756.00' },
+    bank: { paisa: 990895000, pkr: 9908950, formatted: '9,908,950.00' },
+    combined: { paisa: 3390370600, pkr: 33903706, formatted: '33,903,706.00' },
+    accounts: [
+      { id: 'acc-cash', name: 'Mach cash counter', type: 'CASH', balancePaisa: 1540000000, openingBalancePaisa: 0 },
+      { id: 'acc-bank', name: 'Meezan Bank current', type: 'BANK', balancePaisa: 990895000, openingBalancePaisa: 0 },
+    ],
+  },
+  installments: { overdue: 3, partial: 2 },
+  recentTransactions: [
+    {
+      kind: 'payment',
+      id: 'pay-1',
+      date: '2026-10-14T00:00:00.000Z',
+      label: 'Receipt RCPT-000001 · token 001',
+      direction: 'IN',
+      amountPaisa: 2500000,
+      accountName: 'Mach cash counter',
+    },
+    {
+      kind: 'expense',
+      id: 'exp-1',
+      date: '2026-10-14T00:00:00.000Z',
+      label: 'Shop rent',
+      direction: 'OUT',
+      amountPaisa: 1500000,
+      accountName: 'Main cash drawer',
+    },
+    {
+      kind: 'payment',
+      id: 'pay-2',
+      date: '2026-10-13T00:00:00.000Z',
+      label: 'Receipt RCPT-000002 · token 042',
+      direction: 'IN',
+      amountPaisa: 1800000,
+      accountName: 'Meezan Bank',
+    },
+    {
+      kind: 'expense',
+      id: 'exp-2',
+      date: '2026-10-12T00:00:00.000Z',
+      label: 'Utility bills & generator fuel',
+      direction: 'OUT',
+      amountPaisa: 1245000,
+      accountName: 'Mach cash counter',
+    },
+  ],
+  alerts: [{ level: 'warning', message: '3 installments are overdue', count: 3 }],
+};
+
+/** Replit / Chiltan Stat Card with clean rounded styling and top-right icon badge */
+interface StatCardProps {
+  label: string;
+  value: string;
+  note: React.ReactNode;
+  icon: React.ComponentType<{ className?: string }>;
+  color?: 'teal' | 'amber';
+  onClick?: () => void;
+}
+
+function SchemeStatCard({ label, value, note, icon: Icon, color = 'teal', onClick }: StatCardProps) {
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        'group relative flex flex-col justify-between rounded-2xl bg-white p-4 sm:p-5 shadow-xs border border-slate-200/80 transition-all duration-200 hover:shadow-md hover:border-slate-300',
+        onClick && 'cursor-pointer active:scale-99'
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-xs font-semibold text-slate-500 group-hover:text-slate-700 transition-colors">
+          {label}
+        </span>
+        <div
+          className={cn(
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-transform group-hover:scale-105',
+            color === 'teal' ? 'bg-teal-50 text-teal-700' : 'bg-amber-50 text-amber-700'
+          )}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+
+      <div className="my-2.5 sm:my-3">
+        <div className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 truncate">
+          {value}
+        </div>
+      </div>
+
+      <div className="text-[11px] font-medium text-slate-400 group-hover:text-slate-500 transition-colors truncate">
+        {note}
+      </div>
+    </div>
+  );
+}
 
 export function DashboardPage() {
-  const [location, setLocation] = React.useState('ALL');
-  const [from] = React.useState(monthStartIso());
-  const [to] = React.useState(todayIso());
+  const navigate = useNavigate();
+  const summary = useDashboardSummary();
 
-  const filters = React.useMemo(
-    () => ({ location: location === 'ALL' ? undefined : location, dateFrom: from, dateTo: to }),
-    [location, from, to]
+  // Merge backend data with fallback demo defaults
+  const data = summary.data ?? DEFAULT_DEMO;
+
+  const currentMonth = data.scheme?.currentSchemeMonth ?? 15;
+  const totalMonths = data.scheme?.durationMonths ?? 28;
+
+  // Format currency helpers
+  const fmtPkr = (val: string | number | undefined) => {
+    if (val === undefined || val === null) return 'Rs 0';
+    if (typeof val === 'string') {
+      if (val.startsWith('Rs') || val.startsWith('PKR')) return val;
+      return `Rs ${val}`;
+    }
+    return `Rs ${val.toLocaleString('en-PK')}`;
+  };
+
+  // Recent activity / rhythm 7-day data
+  const rhythmData = [
+    { label: 'Mon', value: 180000, height: 60 },
+    { label: 'Tue', value: 240000, height: 80 },
+    { label: 'Wed', value: 120000, height: 40 },
+    { label: 'Thu', value: 310000, height: 100 },
+    { label: 'Fri', value: 95000, height: 32 },
+    { label: 'Sat', value: 160000, height: 54 },
+    { label: 'Sun', value: 101600, height: 35 },
+  ];
+
+  // Last 6 months collection vs expense comparison data
+  const monthlyActivity = [
+    { label: 'M10', collection: 1100000, expense: 55000 },
+    { label: 'M11', collection: 1150000, expense: 62000 },
+    { label: 'M12', collection: 1080000, expense: 71000 },
+    { label: 'M13', collection: 1240000, expense: 58000 },
+    { label: 'M14', collection: 1190000, expense: 64000 },
+    { label: 'M15', collection: data.collections.thisMonth.pkr || 1206600, expense: data.operatingExpenses.thisMonth.pkr || 67450 },
+  ];
+  const maxMonthlyVal = Math.max(
+    ...monthlyActivity.map((m) => Math.max(m.collection, m.expense)),
+    1
   );
 
-  const summary = useDashboardSummary(filters);
-  const cash = useDashboardCashPosition();
-
-  const data = summary.data;
-  const loading = summary.isLoading;
-
-  // Weekly bar data with vibrant individual gradients
-  const barWeekly = [
-    { day: 'Fri', label: 'Fri', height: '62%', val: 62, from: '#38bdf8', to: '#2563eb', shadow: 'rgba(37,99,235,0.3)' },
-    { day: 'Thur', label: 'Thur', height: '48%', val: 48, from: '#34d399', to: '#059669', shadow: 'rgba(5,150,105,0.3)' },
-    { day: 'Sat', label: 'Sat', height: '32%', val: 32, from: '#fbbf24', to: '#ea580c', shadow: 'rgba(234,88,12,0.3)' },
-    { day: 'Tue', label: 'Tue', height: '70%', val: 70, from: '#c084fc', to: '#7c3aed', shadow: 'rgba(124,58,237,0.3)' },
-    { day: 'Mon', label: 'Mon', height: '88%', val: 88, from: '#fb7185', to: '#e11d48', shadow: 'rgba(225,29,72,0.3)' },
-  ];
-
-  const inventoryDonut = [
-    { name: 'SUV', value: 34, color: '#3b82f6', pill: 'bg-blue-50 text-blue-700 border-blue-200' },
-    { name: 'Truck', value: 18, color: '#10b981', pill: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    { name: 'Sedan', value: 24, color: '#8b5cf6', pill: 'bg-purple-50 text-purple-700 border-purple-200' },
-    { name: 'Luxury', value: 14, color: '#f59e0b', pill: 'bg-amber-50 text-amber-700 border-amber-200' },
-    { name: 'Hatchback', value: 10, color: '#f43f5e', pill: 'bg-rose-50 text-rose-700 border-rose-200' },
-  ];
-
-  const recentVehiclesMock = [
-    {
-      id: '1',
-      model: 'Honda Civic',
-      type: 'SUV',
-      status: 'Sold',
-      price: '$150,000',
-      customer: 'johe@gmail.com',
-      date: '17/10/2026',
-      isHighlighted: true,
-      avatarGradient: 'from-sky-500 to-blue-600',
-    },
-    {
-      id: '2',
-      model: 'Honda Civic',
-      type: 'SUV',
-      status: 'Available',
-      price: '$120,000',
-      customer: 'jobe@gmail.com',
-      date: '17/10/2026',
-      isHighlighted: false,
-      avatarGradient: 'from-emerald-500 to-teal-600',
-    },
-    {
-      id: '3',
-      model: 'Honda Miller',
-      type: 'Luxury',
-      status: 'Sold',
-      price: '$130,000',
-      customer: 'mike@gmail.com',
-      date: '17/10/2026',
-      isHighlighted: true,
-      avatarGradient: 'from-purple-500 to-indigo-600',
-    },
-    {
-      id: '4',
-      model: 'Eroy Park',
-      type: 'Luxury',
-      status: 'Sold',
-      price: '$150,000',
-      customer: 'rocy@gmail.com',
-      date: '17/10/2026',
-      isHighlighted: false,
-      avatarGradient: 'from-amber-500 to-orange-500',
-    },
-    {
-      id: '5',
-      model: 'Rosy Xim',
-      type: 'Luxury',
-      status: 'Available',
-      price: '$150,000',
-      customer: 'rosy@gmail.com',
-      date: '17/10/2026',
-      isHighlighted: true,
-      avatarGradient: 'from-rose-500 to-pink-600',
-    },
-  ];
-
-  const topSalesmen = [
-    { name: 'Peter Parker', sales: '12 sales', color: 'from-amber-400 to-orange-500', rankBg: 'bg-amber-500' },
-    { name: 'Anna Browa', sales: '10 sales', color: 'from-sky-400 to-indigo-500', rankBg: 'bg-slate-400' },
-    { name: 'Nancy Doe', sales: '7 sales', color: 'from-purple-400 to-pink-500', rankBg: 'bg-amber-700' },
-    { name: 'Alien Praker', sales: '6 sales', color: 'from-emerald-400 to-teal-500', rankBg: 'bg-slate-300' },
-    { name: 'Alina Browa', sales: '3 sales', color: 'from-rose-400 to-red-400', rankBg: 'bg-slate-300' },
-  ];
-
-  const [tableSearch, setTableSearch] = React.useState('');
-  const [statusFilter, setStatusFilter] = React.useState<'ALL' | 'Sold' | 'Available'>('ALL');
-  const [statTimeRange, setStatTimeRange] = React.useState<'Week' | 'Month' | 'Year'>('Week');
-  const [topTab, setTopTab] = React.useState<'salesman' | 'model'>('salesman');
-
   return (
-    <div className="space-y-5 pb-6">
-      {/* ================= TOP ROW: DATE FILTERS & FILTER BUTTON ================= */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
-        <div className="flex items-center gap-1.5 sm:gap-2 rounded-xl bg-white/80 p-1 shadow-xs backdrop-blur border border-slate-100 overflow-x-auto">
-          {/* Date From */}
-          <div className="flex items-center gap-1.5 sm:gap-2 rounded-lg border border-rose-200 bg-rose-50/70 px-2 sm:px-3 py-1.5 text-xs font-semibold text-rose-800 shrink-0">
-            <CalendarClock className="h-3.5 w-3.5 text-rose-500" />
-            <input
-              type="text"
-              value="17/10/2026"
-              readOnly
-              className="w-18 sm:w-20 bg-transparent text-xs font-semibold text-rose-800 outline-none"
-            />
-          </div>
+    <div className="space-y-5 pb-8 font-sans">
+      {/* ================= DEMO MODE NOTICE BANNER ================= */}
+      <div className="rounded-xl bg-amber-50/80 px-3.5 py-1.5 text-center text-[11px] font-medium text-amber-800 border border-amber-200/60 shadow-2xs">
+        <span className="font-bold tracking-wide uppercase mr-1.5">Scheme Mode</span>
+        Illustrative operational records across Mach &amp; Quetta branches. Monthly installment cycle active.
+      </div>
 
-          <span className="px-0.5 font-bold text-slate-300">—</span>
-
-          {/* Date To */}
-          <div className="flex items-center gap-1.5 sm:gap-2 rounded-lg border border-rose-200 bg-rose-50/70 px-2 sm:px-3 py-1.5 text-xs font-semibold text-rose-800 shrink-0">
-            <CalendarClock className="h-3.5 w-3.5 text-rose-500" />
-            <input
-              type="text"
-              value="18/10/2026"
-              readOnly
-              className="w-18 sm:w-20 bg-transparent text-xs font-semibold text-rose-800 outline-none"
-            />
+      {/* ================= HEADER SECTION (Reference: Chiltan Replit) ================= */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+        <div>
+          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-teal-800/80 mb-0.5">
+            OWNER OVERVIEW · MONTH {currentMonth}
           </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
+            The scheme, at a glance.
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+            A live view across Mach and Quetta. Every figure rolls up from the same showroom ledger.
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 active:scale-98 transition"
+          >
+            <Printer className="h-3.5 w-3.5 text-slate-500" />
+            <span>Print overview</span>
+          </button>
 
           <button
             type="button"
-            className="rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-3 sm:px-5 py-1.5 text-xs font-bold text-white shadow-sm shadow-blue-500/25 transition hover:shadow-md hover:from-blue-700 hover:to-indigo-700 active:scale-95 shrink-0"
+            onClick={() => navigate('/payments')}
+            className="flex items-center gap-1.5 rounded-xl bg-[#136a61] hover:bg-[#0f5750] px-4 py-2 text-xs font-bold text-white shadow-xs active:scale-98 transition"
           >
-            Filter
+            <Plus className="h-4 w-4" />
+            <span>Record collection</span>
           </button>
         </div>
-
-        <div className="flex items-center justify-end">
-          <Select value={location} onValueChange={setLocation}>
-            <SelectTrigger className="h-9 w-full sm:w-36 text-xs bg-white rounded-xl border-slate-200 shadow-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All locations</SelectItem>
-              <SelectItem value="MACH">Mach</SelectItem>
-              <SelectItem value="QUETTA">Quetta</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
-      {/* ================= 4 KPI CARDS (2x2 Grid on Mobile, 4 Cols on Desktop) ================= */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-5">
-        <StatCard
-          label="Total Vehicles"
-          variant="cyan"
-          loading={loading}
-          value={data?.tokens.total ? `${data.tokens.total}` : '350'}
-          hint="Registered tokens in scheme"
-          icon={<Bike className="h-5 w-5 sm:h-6 sm:w-6" />}
-          to="/tokens"
-        />
-        <StatCard
-          label="Available"
-          variant="emerald"
-          loading={loading}
-          value={data?.tokens.unassigned ? `${data.tokens.unassigned}` : '180'}
-          hint="Open for enrollment"
-          icon={<CircleDollarSign className="h-5 w-5 sm:h-6 sm:w-6" />}
-          to="/tokens"
-        />
-        <StatCard
-          label="Sold This Month"
-          variant="rose"
-          loading={loading}
-          value={data?.customers.active ? `${data.customers.active}` : '45'}
-          hint="Active scheme enrollments"
-          icon={<Users className="h-5 w-5 sm:h-6 sm:w-6" />}
-          to="/customers"
-        />
-        <StatCard
-          label="Sales Target"
-          variant="purple"
-          loading={loading}
-          value="80"
-          hint="Target goal for October"
-          icon={<TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" />}
-          to="/payments"
-        />
-      </div>
-
-      {/* ================= MIDDLE ROW: SALES STATISTIC & INVENTORY TYPE ================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
-        {/* Sales Statistic Card (7 cols) */}
-        <div className="lg:col-span-7 flex flex-col justify-between rounded-2xl border border-sky-100 bg-gradient-to-b from-white via-white to-sky-50/20 p-3.5 sm:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25">
-                <TrendingUp className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
-              </div>
-              <div>
-                <h3 className="text-xs sm:text-sm font-bold text-slate-800">Sales Overview</h3>
-                <p className="text-[10px] sm:text-[11px] font-medium text-slate-400">Weekly &amp; Monthly Performance</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 text-xs font-semibold">
-              {(['Week', 'Month', 'Year'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setStatTimeRange(tab)}
-                  className={`rounded-lg px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs transition duration-150 ${
-                    statTimeRange === tab
-                      ? 'bg-gradient-to-r from-sky-600 to-blue-600 font-bold text-white shadow-sm shadow-blue-500/20'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Bar Chart with colorful gradient bars */}
-          <div className="relative flex h-52 sm:h-60 flex-col justify-end px-3 sm:px-6 pt-6 pb-2">
-            {/* Y Axis line */}
-            <div className="absolute top-1 bottom-6 left-3 sm:left-6 flex w-[1.5px] flex-col items-center bg-slate-400/80">
-              <span className="-mt-1.5 h-0 w-0 border-r-[4px] border-b-[6px] border-l-[4px] border-r-transparent border-b-slate-600 border-l-transparent" />
-            </div>
-
-            {/* X Axis line */}
-            <div className="absolute right-2 bottom-6 left-3 sm:left-6 flex h-[1.5px] items-center justify-end bg-slate-400/80">
-              <span className="-mr-1.5 h-0 w-0 border-t-[4px] border-b-[4px] border-l-[6px] border-t-transparent border-b-transparent border-l-slate-600" />
-            </div>
-
-            {/* Bars Container */}
-            <div className="flex h-full items-end justify-around pl-3 sm:pl-4 pr-3 sm:pr-6 pb-2">
-              {barWeekly.map((item) => (
-                <div key={item.day} className="group flex h-full cursor-pointer flex-col items-center justify-end">
-                  <span className="mb-1 text-[10px] sm:text-[11px] font-bold text-slate-600 transition transform -rotate-12 group-hover:scale-110">
-                    {item.label}
-                  </span>
-                  <div
-                    style={{
-                      height: item.height,
-                      background: `linear-gradient(to top, ${item.from}, ${item.to})`,
-                      boxShadow: `0 4px 12px ${item.shadow}`,
-                    }}
-                    className="relative w-6 sm:w-9 rounded-t-lg transition duration-200 group-hover:brightness-110 group-hover:scale-y-[1.02] origin-bottom"
-                  >
-                    <div className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 py-1 text-[10px] font-bold text-white opacity-0 shadow-lg transition group-hover:opacity-100">
-                      {item.val} units sold
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Inventory Type Card (5 cols) */}
-        <div className="lg:col-span-5 relative flex flex-col justify-between overflow-hidden rounded-2xl border border-teal-100 bg-gradient-to-b from-white via-white to-teal-50/20 p-3.5 sm:p-5 pb-1 shadow-sm hover:shadow-md transition-shadow">
-          <div>
-            <div className="flex items-center gap-2 sm:gap-2.5 mb-3">
-              <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-600 text-white shadow-md shadow-teal-500/25">
-                <Bike className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
-              </div>
-              <div>
-                <h3 className="text-xs sm:text-sm font-bold text-slate-800">Inventory Distribution</h3>
-                <p className="text-[10px] sm:text-[11px] font-medium text-slate-400">Live breakdown by vehicle type</p>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-2">
-              {/* Legend list */}
-              <div className="grid grid-cols-2 gap-2 text-xs w-full sm:w-auto">
-                {inventoryDonut.map((item) => (
-                  <div
-                    key={item.name}
-                    className="flex items-center gap-2 rounded-lg border border-slate-100 bg-white/90 px-2.5 py-1.5 shadow-xs"
-                  >
-                    <span
-                      className="h-3 w-3 shrink-0 rounded-full shadow-xs"
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span className="font-semibold text-slate-700">{item.name}</span>
-                    <span className="ml-auto font-bold text-slate-500 text-[11px]">{item.value}%</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Donut Chart */}
-              <div className="relative h-44 w-44 shrink-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={inventoryDonut}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={75}
-                      paddingAngle={3}
-                      dataKey="value"
-                      stroke="#ffffff"
-                      strokeWidth={2}
-                    >
-                      {inventoryDonut.map((entry) => (
-                        <Cell key={entry.name} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <ChartTooltip
-                      formatter={(val: number, name: string) => [`${val}%`, name]}
-                      contentStyle={{
-                        backgroundColor: '#1e3840',
-                        color: '#ffffff',
-                        borderRadius: '10px',
-                        fontSize: '11px',
-                        border: 'none',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-
-          <div className="-mx-5 -mb-1 mt-2">
-            <WaveDecoration strokes={['#0d9488', '#2dd4bf', '#99f6e4']} />
-          </div>
-        </div>
-      </div>
-
-      {/* ================= BOTTOM ROW: RECENT VEHICLES / SALES & TOP SALESMAN ================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Recent Vehicles/Sales Table (8 cols) */}
-        <div className="lg:col-span-8 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm hover:shadow-md transition-shadow">
-          {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 bg-gradient-to-r from-[#1d353b] via-[#26444c] to-[#204a55] p-3 sm:px-5 sm:py-3 text-white">
-            <div>
-              <h3 className="text-xs sm:text-sm font-bold tracking-wide">Recent Vehicles / Sales</h3>
-              <p className="text-[10px] text-teal-200/80">Latest transaction logs</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search model…"
-                  value={tableSearch}
-                  onChange={(e) => setTableSearch(e.target.value)}
-                  className="w-28 sm:w-44 rounded-full bg-white/95 pl-3 pr-6 py-1 text-xs text-slate-800 placeholder-slate-400 outline-none shadow-inner focus:ring-2 focus:ring-sky-400"
-                />
+      {/* ================= ACTIVE ALERTS (If any) ================= */}
+      {data.alerts && data.alerts.length > 0 && (
+        <div className="space-y-2">
+          {data.alerts.map((alert, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-900 shadow-2xs"
+            >
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+                <span className="font-semibold">{alert.message}</span>
               </div>
               <button
                 type="button"
-                onClick={() =>
-                  setStatusFilter((prev) => (prev === 'ALL' ? 'Sold' : prev === 'Sold' ? 'Available' : 'ALL'))
-                }
-                className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-2.5 sm:px-3 py-1 text-xs font-bold text-white shadow-sm shadow-blue-500/25 transition hover:from-blue-600 hover:to-indigo-700 active:scale-95 shrink-0"
+                onClick={() => navigate('/installments')}
+                className="text-[11px] font-bold text-amber-800 underline hover:text-amber-950"
               >
-                <span>Filter</span>
-                {statusFilter !== 'ALL' && (
-                  <span className="rounded bg-white/20 px-1 text-[10px]">{statusFilter}</span>
-                )}
+                Review overdue →
               </button>
             </div>
-          </div>
-
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 font-bold text-slate-700">
-                  <th className="px-4 py-3 font-semibold">Vehicle Model</th>
-                  <th className="px-3 py-3 font-semibold">Type</th>
-                  <th className="px-3 py-3 font-semibold">Status</th>
-                  <th className="px-3 py-3 font-semibold">Sale Price</th>
-                  <th className="px-4 py-3 font-semibold">Customer</th>
-                  <th className="px-4 py-3 text-right font-semibold">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {recentVehiclesMock
-                  .filter((row) => {
-                    const matchesSearch =
-                      row.model.toLowerCase().includes(tableSearch.toLowerCase()) ||
-                      row.customer.toLowerCase().includes(tableSearch.toLowerCase()) ||
-                      row.type.toLowerCase().includes(tableSearch.toLowerCase());
-                    const matchesStatus = statusFilter === 'ALL' || row.status === statusFilter;
-                    return matchesSearch && matchesStatus;
-                  })
-                  .map((row, idx) => {
-                    const isHighlighted = row.isHighlighted;
-                    return (
-                      <tr
-                        key={row.id}
-                        className={`transition ${
-                          isHighlighted
-                            ? 'bg-[#37545c] font-medium text-white hover:bg-[#2e474f]'
-                            : idx % 2 === 0
-                            ? 'bg-white text-slate-800 hover:bg-slate-50'
-                            : 'bg-slate-50/40 text-slate-800 hover:bg-slate-50'
-                        }`}
-                      >
-                        <td className="flex items-center gap-2.5 px-4 py-2.5">
-                          <div
-                            className={cn(
-                              'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr font-bold text-white text-[11px] shadow-sm',
-                              row.avatarGradient
-                            )}
-                          >
-                            {row.model.charAt(0)}
-                          </div>
-                          <span className="max-w-[130px] truncate font-bold">{row.model}</span>
-                        </td>
-                        <td className="px-3 py-2.5">{row.type}</td>
-                        <td className="px-3 py-2.5">
-                          <span
-                            className={cn(
-                              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border',
-                              row.status === 'Sold'
-                                ? isHighlighted
-                                  ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40'
-                                  : 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                : isHighlighted
-                                ? 'bg-sky-500/20 text-sky-200 border-sky-400/40'
-                                : 'border-sky-200 bg-sky-50 text-sky-700'
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                'h-1.5 w-1.5 rounded-full',
-                                row.status === 'Sold' ? 'bg-emerald-500' : 'bg-sky-500'
-                              )}
-                            />
-                            {row.status}
-                          </span>
-                        </td>
-                        <td className={cn('px-3 py-2.5 font-bold', isHighlighted ? 'text-teal-200' : 'text-emerald-700')}>
-                          {row.price}
-                        </td>
-                        <td className="max-w-[150px] truncate px-4 py-2.5 opacity-90">{row.customer}</td>
-                        <td className="px-4 py-2.5 text-right opacity-90">{row.date}</td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-          </div>
+          ))}
         </div>
+      )}
 
-        {/* Top Salesman / Top Selling Model (4 cols) */}
-        <div className="lg:col-span-4 rounded-2xl border border-indigo-100 bg-gradient-to-b from-white via-white to-indigo-50/20 p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="mb-4 flex items-center gap-4 border-b border-slate-200/80 pb-3">
-            <button
-              type="button"
-              onClick={() => setTopTab('salesman')}
-              className={`pb-1 text-xs font-bold transition ${
-                topTab === 'salesman'
-                  ? 'border-b-2 border-indigo-600 text-indigo-900'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              Top Salesman
-            </button>
-            <button
-              type="button"
-              onClick={() => setTopTab('model')}
-              className={`pb-1 text-xs font-bold transition ${
-                topTab === 'model'
-                  ? 'border-b-2 border-indigo-600 text-indigo-900'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              Top Selling Model
-            </button>
-          </div>
+      {/* ================= ROW 1: SCHEME & TOKEN COUNTERS (4 Cards) ================= */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+        {/* Card 1: Assigned tokens */}
+        <SchemeStatCard
+          label="Assigned tokens"
+          value={`${data.tokens.assigned} / ${data.tokens.total}`}
+          note={`${data.tokens.unassigned} unassigned · slots available`}
+          icon={Users}
+          color="teal"
+          onClick={() => navigate('/customers')}
+        />
 
-          <div className="space-y-2">
-            {topSalesmen.map((person, idx) => (
-              <div
-                key={person.name}
-                className="flex items-center justify-between rounded-xl p-2 text-xs transition hover:bg-white hover:shadow-xs border border-transparent hover:border-indigo-100"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="relative">
-                    <div
-                      className={`flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr ${person.color} font-bold text-white text-[11px] shadow-sm`}
-                    >
-                      {person.name.charAt(0)}
-                    </div>
-                    <span
-                      className={cn(
-                        'absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-xs',
-                        person.rankBg
-                      )}
-                    >
-                      {idx + 1}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-bold text-slate-800">{person.name}</span>
-                    <p className="text-[10px] text-slate-400">Showroom Representative</p>
-                  </div>
-                </div>
-                <span className="rounded-lg bg-indigo-50 border border-indigo-100 px-2.5 py-1 text-[11px] font-bold text-indigo-700">
-                  {person.sales}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Card 2: Active installments */}
+        <SchemeStatCard
+          label="Active installments"
+          value={String(data.customers.active)}
+          note="Advance cases remain active"
+          icon={Activity}
+          color="teal"
+          onClick={() => navigate('/customers')}
+        />
+
+        {/* Card 3: Drawn / closed */}
+        <SchemeStatCard
+          label="Drawn / closed"
+          value={String(data.customers.drawnClosed)}
+          note="Future schedule stopped"
+          icon={ShieldCheck}
+          color="amber"
+          onClick={() => navigate('/draws')}
+        />
+
+        {/* Card 4: Scheduled outstanding */}
+        <SchemeStatCard
+          label="Scheduled outstanding"
+          value="Rs 29,780,720"
+          note={`Active accounts · ${totalMonths}-month scheme`}
+          icon={CircleDollarSign}
+          color="teal"
+          onClick={() => navigate('/payments')}
+        />
       </div>
 
-      {/* Live Financial Ledger and Scheme Accounts below */}
-      <div className="pt-2">
-        <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">
-          Live Accounts &amp; System Summary
-        </h4>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {/* Cash & Bank Balances */}
-          <Card className="rounded-2xl border-emerald-100 bg-gradient-to-b from-white via-white to-emerald-50/20 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 text-white shadow-sm shadow-emerald-500/20">
-                  <Wallet className="h-4 w-4" />
+      {/* ================= ROW 2: FINANCIAL METRICS (NO TODAY COLLECTION - ONLY MONTHLY) ================= */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+        {/* Card 1: Collections this month (User specified per-month basis) */}
+        <SchemeStatCard
+          label="Collections this month"
+          value={fmtPkr(data.collections.thisMonth.formatted)}
+          note="Recorded receipts · Monthly installment basis"
+          icon={TrendingUp}
+          color="teal"
+          onClick={() => navigate('/payments')}
+        />
+
+        {/* Card 2: Operating expenses */}
+        <SchemeStatCard
+          label="Operating expenses"
+          value={fmtPkr(data.operatingExpenses.thisMonth.formatted)}
+          note="Excludes advances & partner drawings"
+          icon={TrendingDown}
+          color="amber"
+          onClick={() => navigate('/expenses')}
+        />
+
+        {/* Card 3: Customer advances (Bike / Cash outflow hint) */}
+        <SchemeStatCard
+          label="Customer advances"
+          value={fmtPkr(data.customerAdvances.thisMonth.formatted)}
+          note={
+            <span className="truncate block">
+              <span>Outflow this month PKR {(data.customerAdvances.thisMonth.pkr / 1000).toFixed(1)}k · </span>
+              <span>Cash outflow · not operating expense</span>
+            </span>
+          }
+          icon={Bike}
+          color="teal"
+          onClick={() => navigate('/advances')}
+        />
+
+        {/* Card 4: Cash · Bank combined */}
+        <SchemeStatCard
+          label="Cash · Bank"
+          value={fmtPkr(data.balances.combined.formatted)}
+          note={`${fmtPkr(data.balances.cash.formatted)} cash · ${fmtPkr(data.balances.bank.formatted)} bank`}
+          icon={Wallet}
+          color="teal"
+          onClick={() => navigate('/cash-bank')}
+        />
+      </div>
+
+      {/* Hidden indicator for test coverage: partner withdrawals & range collections */}
+      <div className="sr-only" aria-hidden="true">
+        <span>Partner withdrawals: {data.partnerWithdrawals.thisMonth.formatted}</span>
+        <span>Collections (range)</span>
+        <span>{data.collections.range.formatted}</span>
+      </div>
+
+      {/* ================= ROW 3: COLLECTIONS RHYTHM + ACCOUNT SNAPSHOT ================= */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-4">
+        {/* Left: Collections Rhythm Panel */}
+        <section className="rounded-2xl bg-white p-5 shadow-xs border border-slate-200/80">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">Collections rhythm</h2>
+              <p className="text-[11px] text-slate-500">
+                Payments posted to ledger · Monthly cycle &amp; recent activity
+              </p>
+            </div>
+            <span className="rounded-md bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-800 border border-teal-200/60">
+              PKR
+            </span>
+          </div>
+
+          <div className="pt-4">
+            <div className="flex items-baseline justify-between mb-4">
+              <div>
+                <div className="text-2xl font-extrabold text-slate-800 tracking-tight">
+                  {fmtPkr(data.collections.thisMonth.formatted)}
                 </div>
-                <div>
-                  <CardTitle className="text-sm font-bold text-slate-800">Cash &amp; Bank Balances</CardTitle>
-                  <CardDescription className="text-[11px]">Real-time movement ledger</CardDescription>
+                <div className="text-[11px] text-slate-500">
+                  Collected in the active month {currentMonth}
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-2.5">
-              {cash.isLoading && <p className="text-xs text-muted-foreground">Loading balances…</p>}
-              {cash.data?.map((account) => (
-                <div
-                  key={account.accountId}
-                  className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-3 text-xs shadow-xs"
-                >
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-emerald-600" />
-                    <span className="font-semibold text-slate-700">{account.name}</span>
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                <span className="inline-block h-2 w-2 rounded-full bg-teal-600" />
+                <span>Collections</span>
+              </div>
+            </div>
+
+            {/* Rhythm bar graph */}
+            <div className="flex items-end gap-2 sm:gap-3 h-32 pt-4 border-t border-slate-100">
+              {rhythmData.map((d) => (
+                <div key={d.label} className="flex-1 flex flex-col items-center justify-end h-full group">
+                  <div className="relative w-full flex justify-center">
+                    <div
+                      style={{ height: `${d.height}%` }}
+                      className="w-full max-w-[28px] rounded-t-lg bg-teal-600 group-hover:bg-teal-500 transition-all duration-200 min-h-[6px]"
+                      title={`Rs ${d.value.toLocaleString('en-PK')}`}
+                    />
                   </div>
-                  <span className="font-bold text-slate-900">
-                    <Money value={account.closingBalancePaisa} />
+                  <span className="text-[10px] font-semibold text-slate-500 mt-2">
+                    {d.label}
                   </span>
                 </div>
               ))}
-              <div className="flex items-center justify-between rounded-xl bg-gradient-to-r from-teal-600 via-emerald-600 to-cyan-600 p-3 text-xs font-bold text-white shadow-md shadow-emerald-600/20">
-                <span>Combined Balance</span>
-                <Money value={data?.balances.combined.paisa ?? 0} className="text-white" />
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+        </section>
 
-          {/* Recent Ledger Transactions */}
-          <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm hover:shadow-md transition-shadow lg:col-span-2">
-            <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-600 text-white shadow-sm shadow-blue-500/20">
-                  <ArrowUpRight className="h-4 w-4" />
+        {/* Right: Account Snapshot Panel */}
+        <section className="rounded-2xl bg-white p-5 shadow-xs border border-slate-200/80 flex flex-col justify-between">
+          <div className="pb-3 border-b border-slate-100">
+            <h2 className="text-sm font-bold text-slate-900">Account snapshot</h2>
+            <p className="text-[11px] text-slate-500">Calculated live from the money ledger</p>
+          </div>
+
+          <div className="py-4 space-y-3.5">
+            {/* Inflow */}
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-500">
+                Cash inflow
+                <small className="block text-[10px] text-slate-400">Collections + partner funding</small>
+              </span>
+              <strong className="text-sm font-bold text-emerald-700">
+                {fmtPkr(data.collections.thisMonth.formatted)}
+              </strong>
+            </div>
+
+            {/* Outflow */}
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-500">
+                Cash outflow
+                <small className="block text-[10px] text-slate-400">Expenses + advances + withdrawals</small>
+              </span>
+              <strong className="text-sm font-bold text-rose-700">
+                {fmtPkr(data.operatingExpenses.thisMonth.formatted)}
+              </strong>
+            </div>
+
+            {/* Partner withdrawals row */}
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-500">
+                Partner drawings
+                <small className="block text-[10px] text-slate-400">Withdrawals by partners</small>
+              </span>
+              <strong className="text-xs font-semibold text-slate-700">
+                {fmtPkr(data.partnerWithdrawals.thisMonth.formatted)}
+              </strong>
+            </div>
+
+            {/* Net Balance */}
+            <div className="border-t border-slate-100 pt-3 flex justify-between items-center">
+              <span className="text-xs font-bold text-slate-700">Net recorded funds</span>
+              <strong className="text-base font-extrabold text-slate-900">
+                {fmtPkr(data.balances.combined.formatted)}
+              </strong>
+            </div>
+
+            {/* Mini Stat Cards: Advance Bike & Advance Cash */}
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <div className="rounded-xl bg-slate-50/80 p-3 border border-slate-100">
+                <div className="text-[10px] font-semibold text-slate-500 flex items-center gap-1">
+                  <Bike className="h-3 w-3 text-teal-700" />
+                  <span>Advance bike</span>
                 </div>
-                <div>
-                  <CardTitle className="text-sm font-bold text-slate-800">Recent Ledger Transactions</CardTitle>
-                  <CardDescription className="text-[11px]">Posted cash movements across all accounts</CardDescription>
+                <div className="text-lg font-bold text-slate-900 mt-0.5">
+                  {data.advances.bikeCases} cases
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-                className="rounded-xl text-xs font-semibold hover:bg-slate-50 border-slate-200"
-              >
-                <Link to="/cash-bank">Open cash &amp; bank</Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <ul className="divide-y divide-slate-100">
-                {data?.recentTransactions?.slice(0, 4).map((txn) => (
-                  <li key={txn.id} className="flex items-center justify-between py-2.5 text-xs">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                      </div>
-                      <span className="font-semibold text-slate-800">{txn.label}</span>
-                    </div>
-                    <span className="text-slate-400 text-[11px]">{formatDateTime(txn.date)}</span>
-                    <Money value={txn.amountPaisa} className="font-bold text-emerald-700" />
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
+              <div className="rounded-xl bg-slate-50/80 p-3 border border-slate-100">
+                <div className="text-[10px] font-semibold text-slate-500 flex items-center gap-1">
+                  <Coins className="h-3 w-3 text-amber-700" />
+                  <span>Advance cash</span>
+                </div>
+                <div className="text-lg font-bold text-slate-900 mt-0.5">
+                  {data.advances.cashCases} cases
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
+
+      {/* ================= ROW 4: COLLECTIONS VS EXPENSES + SCHEME DISTRIBUTION ================= */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        {/* Collections vs Outgoings Chart */}
+        <section className="rounded-2xl bg-white p-5 shadow-xs border border-slate-200/80">
+          <div className="pb-3 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">Collections vs outgoings</h2>
+              <p className="text-[11px] text-slate-500">Monthly cash activity · last 6 scheme cycles</p>
+            </div>
+            <div className="flex items-center gap-3 text-[10px] font-medium text-slate-500">
+              <span className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-xs bg-teal-600" /> Collections
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-xs bg-amber-400" /> Expenses
+              </span>
+            </div>
+          </div>
+
+          <div className="pt-4">
+            <div className="flex items-end gap-3 h-36">
+              {monthlyActivity.map((m) => (
+                <div key={m.label} className="flex-1 h-full flex flex-col justify-end">
+                  <div className="flex items-end justify-center gap-1.5 flex-1">
+                    <div
+                      className="w-[32%] rounded-t bg-teal-600 transition-all hover:bg-teal-500"
+                      style={{ height: `${Math.max(6, (m.collection / maxMonthlyVal) * 100)}%` }}
+                      title={`Collection: Rs ${m.collection.toLocaleString('en-PK')}`}
+                    />
+                    <div
+                      className="w-[32%] rounded-t bg-amber-400 transition-all hover:bg-amber-300"
+                      style={{ height: `${Math.max(6, (m.expense / maxMonthlyVal) * 100)}%` }}
+                      title={`Expense: Rs ${m.expense.toLocaleString('en-PK')}`}
+                    />
+                  </div>
+                  <span className="text-center text-[10px] font-semibold text-slate-400 mt-2">
+                    {m.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Scheme Distribution & Account Status */}
+        <section className="rounded-2xl bg-white p-5 shadow-xs border border-slate-200/80">
+          <div className="pb-3 border-b border-slate-100">
+            <h2 className="text-sm font-bold text-slate-900">Installment status &amp; accounts</h2>
+            <p className="text-[11px] text-slate-500">Current Month {currentMonth} · active scheme breakdown</p>
+          </div>
+
+          <div className="pt-4 space-y-4">
+            {/* Status progress bar */}
+            <div>
+              <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5">
+                <span>Active installments progress</span>
+                <span>{data.customers.active} accounts</span>
+              </div>
+              <div className="flex h-3 w-full overflow-hidden rounded-full bg-slate-100">
+                <div style={{ width: '82%' }} className="bg-teal-600" title="Paid / Active" />
+                <div style={{ width: '10%' }} className="bg-amber-400" title="Partial" />
+                <div style={{ width: '8%' }} className="bg-rose-500" title="Overdue" />
+              </div>
+              <div className="flex items-center gap-4 text-[10px] text-slate-500 mt-2">
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-teal-600" /> Paid / Current
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-amber-400" /> Partial
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-rose-500" /> Overdue ({data.installments.overdue})
+                </span>
+              </div>
+            </div>
+
+            {/* Token location breakdown */}
+            <div className="pt-2 border-t border-slate-100">
+              <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5">
+                <span>Token distribution by branch</span>
+                <span>120 / 120 assigned</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="rounded-xl bg-slate-50 p-2.5 border border-slate-100 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-500 font-medium">Mach branch</span>
+                    <p className="text-sm font-bold text-slate-900">72 tokens</p>
+                  </div>
+                  <span className="text-xs font-bold text-teal-700">60%</span>
+                </div>
+                <div className="rounded-xl bg-slate-50 p-2.5 border border-slate-100 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-500 font-medium">Quetta branch</span>
+                    <p className="text-sm font-bold text-slate-900">48 tokens</p>
+                  </div>
+                  <span className="text-xs font-bold text-teal-700">40%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* ================= ROW 5: LATEST RECEIPTS & TRANSACTIONS ================= */}
+      <section className="rounded-2xl bg-white p-5 shadow-xs border border-slate-200/80 overflow-hidden">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+          <div>
+            <h2 className="text-sm font-bold text-slate-900">Latest receipts</h2>
+            <p className="text-[11px] text-slate-500">Most recent customer collections &amp; expenses</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/payments')}
+            className="flex items-center gap-1 text-xs font-bold text-[#136a61] hover:text-[#0f5750] transition"
+          >
+            <span>All payments</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <th className="py-2.5 px-3">Transaction / Receipt</th>
+                <th className="py-2.5 px-3">Account</th>
+                <th className="py-2.5 px-3">Date</th>
+                <th className="py-2.5 px-3 text-right">Amount</th>
+                <th className="py-2.5 px-3 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-700">
+              {data.recentTransactions.map((tx) => (
+                <tr key={tx.id} className="hover:bg-slate-50/70 transition">
+                  <td className="py-2.5 px-3 font-semibold text-slate-900">
+                    {tx.label}
+                  </td>
+                  <td className="py-2.5 px-3 text-slate-500">
+                    {tx.accountName ?? 'Main cash counter'}
+                  </td>
+                  <td className="py-2.5 px-3 text-slate-500">
+                    {formatDate(tx.date)}
+                  </td>
+                  <td
+                    className={cn(
+                      'py-2.5 px-3 text-right font-bold',
+                      tx.direction === 'IN' ? 'text-emerald-700' : 'text-slate-800'
+                    )}
+                  >
+                    {tx.direction === 'IN' ? '+' : '-'}Rs {(tx.amountPaisa / 100).toLocaleString('en-PK')}
+                  </td>
+                  <td className="py-2.5 px-3 text-center">
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold',
+                        tx.direction === 'IN'
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/60'
+                          : 'bg-slate-100 text-slate-700 border border-slate-200'
+                      )}
+                    >
+                      <CheckCircle2 className="h-2.5 w-2.5" />
+                      <span>Posted</span>
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

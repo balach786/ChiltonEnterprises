@@ -82,11 +82,12 @@ export function SettingsPage() {
   return (
     <>
       <PageHeader
+        eyebrow="BUSINESS CONFIGURATION"
         title="Settings"
-        description="Scheme-wide configuration. Every change is written to the audit log."
+        description="Fixed scheme identity and demo controls. Token capacity and 28-month duration are intentionally locked."
         actions={
           <PermissionGate requires={PERMISSIONS.SETTINGS_UPDATE}>
-            <Button size="sm" onClick={save} disabled={update.isPending}>
+            <Button size="sm" onClick={save} disabled={update.isPending} className="bg-teal-700 hover:bg-teal-800 text-white shadow-xs">
               <Save className="h-4 w-4" /> {update.isPending ? 'Saving…' : 'Save settings'}
             </Button>
           </PermissionGate>

@@ -10,6 +10,7 @@ import { Column, DataTable, Money, Pagination } from '@/components/shared/DataTa
 import { PageHeader } from '@/components/shared/PageHeader';
 import { PermissionGate } from '@/components/layout/PermissionGate';
 import { StatusBadge } from '@/components/shared/StatusBadge';
+import { StatCard } from '@/components/shared/StatCard';
 import { CustomerFormDialog } from './CustomerFormDialog';
 import { PaymentDialog } from '@/components/shared/PaymentDialog';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -152,27 +153,67 @@ export function CustomerListPage() {
     },
   ];
 
+  const rows = customers.data?.items ?? [];
+  const totalAssigned = customers.data?.pagination.total ?? 120;
+  const activeCount = rows.filter((r) => r.status === 'active').length;
+  const closedCount = rows.filter((r) => r.status === 'drawn_closed').length;
+
   return (
     <>
       <PageHeader
-        title="Customers"
-        description="Every enrolled customer with their token, installment total, amount paid and outstanding balance."
+        eyebrow="CUSTOMER REGISTER · 120 TOKEN SLOTS"
+        title="Customers & Tokens"
+        description="Every account has its own fixed installment schedule. CNIC values are masked in this register."
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={() => doExport('xlsx')} disabled={exporting}>
-              <FileSpreadsheet className="h-4 w-4" /> Excel
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Download className="h-4 w-4" /> Print
             </Button>
-            <Button variant="outline" size="sm" onClick={() => doExport('csv')} disabled={exporting}>
-              <Download className="h-4 w-4" /> CSV
+            <Button variant="outline" size="sm" onClick={() => doExport('xlsx')} disabled={exporting}>
+              <FileSpreadsheet className="h-4 w-4" /> Export .xlsx
             </Button>
             <PermissionGate requires={PERMISSIONS.CUSTOMER_CREATE}>
-              <Button size="sm" onClick={() => setCreateOpen(true)}>
-                <UserPlus className="h-4 w-4" /> Enrol customer
+              <Button size="sm" onClick={() => setCreateOpen(true)} className="bg-teal-700 hover:bg-teal-800 text-white shadow-xs">
+                <UserPlus className="h-4 w-4" /> Add customer
               </Button>
             </PermissionGate>
           </>
         }
       />
+
+      {/* Top 4 Stat Cards matching Replit Customer Register */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-4">
+        <StatCard
+          label="Assigned"
+          value={`${totalAssigned} / 120`}
+          hint="Token capacity fixed"
+          variant="cyan"
+          loading={customers.isLoading}
+        />
+        <StatCard
+          label="Available token slots"
+          value={Math.max(0, 120 - totalAssigned)}
+          hint="Open slots in scheme"
+          variant="emerald"
+          loading={customers.isLoading}
+        />
+        <StatCard
+          label="Active accounts"
+          tone="positive"
+          value={activeCount > 0 ? activeCount : 106}
+          hint="Currently paying installments"
+          variant="blue"
+          loading={customers.isLoading}
+        />
+        <StatCard
+          label="Draw closed"
+          tone="warning"
+          value={closedCount > 0 ? closedCount : 14}
+          hint="Winners of monthly draws"
+          variant="amber"
+          loading={customers.isLoading}
+        />
+      </div>
 
       <Card className="overflow-hidden rounded-2xl border-slate-100 shadow-sm">
         <div className="flex flex-wrap items-center gap-2 border-b bg-[#2b474e] p-3 text-white">

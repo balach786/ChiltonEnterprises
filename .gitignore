@@ -35,3 +35,4 @@ yarn-error.log*
 # ---------------------------------------------------------------- test artifacts ------
 junit.xml
 .playwright-report/
+scratch/

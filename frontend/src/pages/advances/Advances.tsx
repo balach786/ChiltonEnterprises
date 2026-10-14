@@ -108,32 +108,61 @@ export function AdvancesPage() {
   return (
     <>
       <PageHeader
-        title="Advance bike &amp; advance cash"
-        description="An advance is never a substitute for the scheme — instalments continue until a draw is confirmed."
+        eyebrow="SEPARATE CUSTOMER ARRANGEMENTS"
+        title="Advance Bike / Cash"
+        description="Advances are distinct from the draw. Active customers continue paying installments unless later drawn and closed."
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={() => doExport('xlsx')}><Download className="h-4 w-4" /> Excel</Button>
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Download className="h-4 w-4" /> Print
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => doExport('xlsx')}>
+              <Download className="h-4 w-4" /> Export
+            </Button>
             <PermissionGate requires={PERMISSIONS.ADVANCE_CREATE}>
-              <Button size="sm" onClick={() => setOpen(true)}><Plus className="h-4 w-4" /> New advance</Button>
+              <Button size="sm" onClick={() => setOpen(true)} className="bg-teal-700 hover:bg-teal-800 text-white shadow-xs">
+                <Plus className="h-4 w-4" /> Issue advance
+              </Button>
             </PermissionGate>
           </>
         }
       />
 
-      <InlineAlert tone="info" title="Business rule">
-        Advance bike records no cash movement at all. Advance cash records exactly one cash outflow — and it is reported
-        separately from operating expenses. Neither one stops the installment schedule.
+      <InlineAlert tone="info" title="Advance does not close account">
+        Advances are distinct from the draw. Active customers continue paying monthly installments unless later drawn and closed in Qurandazi.
       </InlineAlert>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Advance bike cases" value={formatNumber(totals?.bikeCount ?? 0)} hint={`${formatNumber(totals?.count ?? 0)} advances total`} icon={<Bike className="h-5 w-5" />} loading={advances.isLoading} />
-        <StatCard label="Advance cash cases" value={formatNumber(totals?.cashCount ?? 0)} hint="Each with exactly one cash outflow" icon={<HandCoins className="h-5 w-5" />} loading={advances.isLoading} />
-        <StatCard label="Total advance value" value={<Money value={totals?.totalPaisa ?? 0} />} hint="All filtered records" tone="warning" loading={advances.isLoading} />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 my-4">
         <StatCard
-          label="Still paying installments"
+          label="Bike cases"
+          value={formatNumber(totals?.bikeCount ?? 0)}
+          hint={`${formatNumber(totals?.count ?? 0)} advances total`}
+          icon={<Bike className="h-5 w-5" />}
+          variant="cyan"
+          loading={advances.isLoading}
+        />
+        <StatCard
+          label="Cash cases"
+          value={formatNumber(totals?.cashCount ?? 0)}
+          hint="Direct cash advance records"
+          icon={<HandCoins className="h-5 w-5" />}
+          variant="amber"
+          loading={advances.isLoading}
+        />
+        <StatCard
+          label="Advance cash issued"
+          value={<Money value={totals?.totalPaisa ?? 0} />}
+          hint="Distinct from operating expenses"
+          variant="emerald"
+          tone="positive"
+          loading={advances.isLoading}
+        />
+        <StatCard
+          label="Still paying"
           tone="positive"
           value={formatNumber(totals?.stillPayingCount ?? 0)}
-          hint="Advances do not pause the scheme"
+          hint="Installments remain active"
+          variant="blue"
           loading={advances.isLoading}
         />
       </div>

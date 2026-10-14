@@ -67,13 +67,21 @@ export function PartnersPage() {
   return (
     <>
       <PageHeader
-        title="Partner accounts"
-        description="Contributions, withdrawals and repayments for each partner — tracked separately from shop expenses."
+        eyebrow="THREE-PARTNER LEDGER"
+        title="Partner Accounts"
+        description="Withdrawals affect cash, bank and partner ledgers, but never operating expenses. No ownership percentages are assumed."
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={doExport}><Download className="h-4 w-4" /> Excel</Button>
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Download className="h-4 w-4" /> Print
+            </Button>
+            <Button variant="outline" size="sm" onClick={doExport}>
+              <Download className="h-4 w-4" /> Export .xlsx
+            </Button>
             <PermissionGate requires={PERMISSIONS.PARTNER_TXN_CREATE}>
-              <Button size="sm" onClick={() => setOpen(true)} disabled={!selected}><Plus className="h-4 w-4" /> Record transaction</Button>
+              <Button size="sm" onClick={() => setOpen(true)} disabled={!selected} className="bg-teal-700 hover:bg-teal-800 text-white shadow-xs">
+                <Plus className="h-4 w-4" /> New transaction
+              </Button>
             </PermissionGate>
           </>
         }

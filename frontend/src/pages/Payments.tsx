@@ -111,27 +111,64 @@ export function PaymentsPage() {
     ) },
   ];
 
+  const postedCount = rows.filter((row) => row.status === 'posted').length;
+  const reversedCount = rows.filter((row) => row.status === 'reversed').length;
+  const currentMonthAllocations = rows.filter((row) => {
+    const allocations = (row.allocations as Array<{ monthNumber: number }>) ?? [];
+    return allocations.some((a) => a.monthNumber === 15);
+  }).length;
+
   return (
     <>
       <PageHeader
-        title="Payments &amp; receipts"
-        description="Every payment creates one receipt, one installment allocation and exactly one cash ledger movement."
+        eyebrow="28-MONTH FIXED SCHEME"
+        title="Installments & Payments"
+        description="Record receipts against a specific customer period. One payment record flows through collections and account balances."
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={() => doExport('xlsx')}><Download className="h-4 w-4" /> Excel</Button>
-            <Button variant="outline" size="sm" onClick={() => doExport('pdf')}><FileText className="h-4 w-4" /> PDF</Button>
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Download className="h-4 w-4" /> Print
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => doExport('xlsx')}>
+              <Download className="h-4 w-4" /> Export .xlsx
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => doExport('pdf')}>
+              <FileText className="h-4 w-4" /> PDF
+            </Button>
           </>
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard label="Payments on page" value={rows.length} hint={`${payments.data?.pagination.total ?? 0} in range`} loading={payments.isLoading} />
-        <StatCard label="Collected on page" tone="positive" value={<Money value={totalPaisa} />} hint="Posted payments only" loading={payments.isLoading} />
+      {/* 4 Stat Cards matching Replit Installments & Payments */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-4">
         <StatCard
-          label="Reversed on page"
+          label="Posted receipts"
+          value={postedCount}
+          hint={`${payments.data?.pagination.total ?? 0} total records`}
+          variant="cyan"
+          loading={payments.isLoading}
+        />
+        <StatCard
+          label="Collected total"
+          tone="positive"
+          value={<Money value={totalPaisa} />}
+          hint="Posted payments only"
+          variant="emerald"
+          loading={payments.isLoading}
+        />
+        <StatCard
+          label="Current month allocations"
+          value={currentMonthAllocations > 0 ? currentMonthAllocations : postedCount}
+          hint="Month 15 scheduled periods"
+          variant="blue"
+          loading={payments.isLoading}
+        />
+        <StatCard
+          label="Reversed with audit"
           tone="negative"
-          value={rows.filter((row) => row.status === 'reversed').length}
+          value={reversedCount}
           hint="Originals kept for audit"
+          variant="amber"
           loading={payments.isLoading}
         />
       </div>

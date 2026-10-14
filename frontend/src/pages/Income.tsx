@@ -67,25 +67,69 @@ export function IncomePage() {
     { header: 'Amount', headerClassName: 'w-32 text-right', className: 'text-right', cell: (row) => <Money value={row.amountPaisa} className="font-medium" /> },
   ];
 
+  const partnerContributions = rows
+    .filter((r) => r.sourceType === 'PARTNER_CONTRIBUTION' || r.category?.toLowerCase().includes('partner'))
+    .reduce((sum, r) => sum + Number(r.amountPaisa ?? 0), 0);
+  const partnerRepayments = rows
+    .filter((r) => r.category?.toLowerCase().includes('repayment'))
+    .reduce((sum, r) => sum + Number(r.amountPaisa ?? 0), 0);
+
   return (
     <>
       <PageHeader
-        title="Income &amp; collections"
-        description="Customer installment collections plus any other business income. Partner contributions are recorded here as funding, never as revenue."
+        eyebrow="CASH INFLOW · REVENUE DISTINCTION"
+        title="Income & Collections"
+        description="Installment income points to payment receipts. Partner capital and repayments are funding inflows, not business revenue."
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={() => doExport('xlsx')}><Download className="h-4 w-4" /> Excel</Button>
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Download className="h-4 w-4" /> Print
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => doExport('xlsx')}>
+              <Download className="h-4 w-4" /> Export .xlsx
+            </Button>
             <PermissionGate requires={PERMISSIONS.INCOME_CREATE}>
-              <Button size="sm" onClick={() => setOpen(true)}><Plus className="h-4 w-4" /> Record income</Button>
+              <Button size="sm" onClick={() => setOpen(true)} className="bg-teal-700 hover:bg-teal-800 text-white shadow-xs">
+                <Plus className="h-4 w-4" /> Record collection
+              </Button>
             </PermissionGate>
           </>
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard label="Total income (range)" value={<Money value={totals?.totalPaisa ?? 0} />} hint="Every inflow record" loading={income.isLoading} />
-        <StatCard label="Of which revenue" tone="positive" value={<Money value={totals?.revenuePaisa ?? 0} />} hint="Excludes partner contributions and loans" loading={income.isLoading} />
-        <StatCard label="Not revenue" tone="info" value={<Money value={(totals?.totalPaisa ?? 0) - (totals?.revenuePaisa ?? 0)} />} hint="Funding received" loading={income.isLoading} />
+      {/* 4 Stat Cards matching Replit Income & Collections */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-4">
+        <StatCard
+          label="Customer collections"
+          tone="positive"
+          value={<Money value={totals?.revenuePaisa ?? 0} />}
+          hint="Installment revenue"
+          variant="cyan"
+          loading={income.isLoading}
+        />
+        <StatCard
+          label="Customer receipts"
+          value={rows.filter((r) => r.isRevenue).length}
+          hint={`${rows.length} total entries`}
+          variant="emerald"
+          loading={income.isLoading}
+        />
+        <StatCard
+          label="Partner contributions"
+          tone="info"
+          value={<Money value={partnerContributions > 0 ? partnerContributions : (totals?.totalPaisa ?? 0) - (totals?.revenuePaisa ?? 0)} />}
+          hint="Capital funding (not revenue)"
+          variant="blue"
+          loading={income.isLoading}
+        />
+        <StatCard
+          label="Partner repayments"
+          tone="warning"
+          value={<Money value={partnerRepayments} />}
+          hint="Cash inflows against advances"
+          variant="amber"
+          loading={income.isLoading}
+        />
       </div>
 
       <Card className="overflow-hidden">

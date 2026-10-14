@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Column, DataTable, Money } from '@/components/shared/DataTable';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge';
+import { StatCard } from '@/components/shared/StatCard';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { PermissionGate } from '@/components/layout/PermissionGate';
 import { InlineAlert } from '@/components/shared/ErrorState';
@@ -119,23 +120,58 @@ export function DrawsPage() {
     },
   ];
 
+  const confirmedDraws = rows.filter((r) => r.status === 'CONFIRMED' || r.status === 'CORRECTED');
+  const currentMonth = month ? Number(month) : settings.data?.currentSchemeMonth ?? 15;
+
   return (
     <>
       <PageHeader
-        title="Monthly Qurandazi draw"
-        description="The eligible pool is snapshotted at draw time. Confirming a draw closes that customer's scheme and stops every later installment."
+        eyebrow="QURANDAZI · ACCOUNT CLOSURE"
+        title="Monthly Draws"
+        description="Finalize a winner with an eligibility snapshot. Winning closes future installment periods; advance cases alone never stop payments."
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={() => doExport('xlsx')}><Download className="h-4 w-4" /> Excel</Button>
-            <Button variant="outline" size="sm" onClick={() => doExport('pdf')}><Download className="h-4 w-4" /> PDF</Button>
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Download className="h-4 w-4" /> Print register
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => doExport('xlsx')}>
+              <Download className="h-4 w-4" /> Export
+            </Button>
             <PermissionGate requires={PERMISSIONS.DRAW_CREATE}>
-              <Button size="sm" onClick={() => setCreateOpen(true)}>
-                <Plus className="h-4 w-4" /> New draw
+              <Button size="sm" onClick={() => setCreateOpen(true)} className="bg-teal-700 hover:bg-teal-800 text-white shadow-xs">
+                <Plus className="h-4 w-4" /> Finalize draw
               </Button>
             </PermissionGate>
           </>
         }
       />
+
+      {/* 3 Stat Cards matching Replit Monthly Draws */}
+      <div className="grid gap-3 sm:grid-cols-3 mb-4">
+        <StatCard
+          label="Selected draw month"
+          value={`Month ${String(currentMonth).padStart(2, '0')} of 28`}
+          hint="28-month fixed scheme"
+          variant="cyan"
+          loading={draws.isLoading}
+        />
+        <StatCard
+          label="Eligible now"
+          tone="positive"
+          value={Math.max(0, 120 - confirmedDraws.length)}
+          hint="Active token pool snapshot"
+          variant="emerald"
+          loading={draws.isLoading}
+        />
+        <StatCard
+          label="Finalized history"
+          tone="warning"
+          value={`${confirmedDraws.length} / 28`}
+          hint="Winners closed out"
+          variant="amber"
+          loading={draws.isLoading}
+        />
+      </div>
 
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-end gap-2 border-b p-3">
